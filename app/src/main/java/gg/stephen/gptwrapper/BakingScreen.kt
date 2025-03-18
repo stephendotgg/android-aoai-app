@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -75,41 +76,43 @@ fun BakingScreen(
     Box(modifier = Modifier.fillMaxSize()) {
         // First, place the gradient at the bottom of the screen
         // The gradient will appear below everything else
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(500.dp)
-        ) {
-            // Use onGloballyPositioned to get the container size
-            val density = LocalDensity.current
-            val boxSize = remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
-
+        if (bakingViewModel.conversationHistory.isEmpty()) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .onGloballyPositioned { coordinates ->
-                        boxSize.value = coordinates.size.toSize()
-                    }
-                    .background(
-                        brush = Brush.radialGradient(
-                            colorStops = arrayOf(
-                                0.0f to Color(0xFFFF1493).copy(alpha = 0.7f),
-                                0.3f to Color(0xFFFF1493).copy(alpha = 0.5f),
-                                0.5f to Color(0xFFFF1493).copy(alpha = 0.3f),
-                                0.7f to Color(0xFFFF1493).copy(alpha = 0.15f),
-                                0.85f to Color(0xFFFF1493).copy(alpha = 0.05f),
-                                1.0f to Color(0x00000000)
-                            ),
-                            // Place center at the bottom middle of the box
-                            center = androidx.compose.ui.geometry.Offset(
-                                x = boxSize.value.width / 2f,
-                                y = boxSize.value.height
-                            ),
-                            radius = 1200f  // Increased from 1000f to make the gradient even larger
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(500.dp)
+            ) {
+                // Use onGloballyPositioned to get the container size
+                val density = LocalDensity.current
+                val boxSize = remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onGloballyPositioned { coordinates ->
+                            boxSize.value = coordinates.size.toSize()
+                        }
+                        .background(
+                            brush = Brush.radialGradient(
+                                colorStops = arrayOf(
+                                    0.0f to Color(0xFFFF1493).copy(alpha = 0.7f),
+                                    0.3f to Color(0xFFFF1493).copy(alpha = 0.5f),
+                                    0.5f to Color(0xFFFF1493).copy(alpha = 0.3f),
+                                    0.7f to Color(0xFFFF1493).copy(alpha = 0.15f),
+                                    0.85f to Color(0xFFFF1493).copy(alpha = 0.05f),
+                                    1.0f to Color(0x00000000)
+                                ),
+                                // Place center at the bottom middle of the box
+                                center = androidx.compose.ui.geometry.Offset(
+                                    x = boxSize.value.width / 2f,
+                                    y = boxSize.value.height
+                                ),
+                                radius = 1200f  // Increased from 1000f to make the gradient even larger
+                            )
                         )
-                    )
-            )
+                )
+            }
         }
 
         // Then place the main content column above the gradient
@@ -197,6 +200,7 @@ fun BakingScreen(
             }
 
             // Content area - updated to show conversation history
+            // Content area - updated to show conversation history or welcome message
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -213,15 +217,28 @@ fun BakingScreen(
                             .padding(16.dp)
                             .verticalScroll(scrollState)
                     ) {
-                        // Show conversation history
-                        bakingViewModel.conversationHistory.forEach { chatItem ->
-                            ChatBubble(
-                                message = chatItem.message,
-                                isUserMessage = chatItem.user == User.USER
+                        // Show welcome message if conversation history is empty
+                        if (bakingViewModel.conversationHistory.isEmpty()) {
+                            Text(
+                                text = "Good evening, Stephen",
+                                color = Color.White,
+                                fontSize = 40.sp,
+                                lineHeight = 50.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 24.dp)
                             )
+                        } else {
+                            // Show conversation history
+                            bakingViewModel.conversationHistory.forEach { chatItem ->
+                                ChatBubble(
+                                    message = chatItem.message,
+                                    isUserMessage = chatItem.user == User.USER
+                                )
 
-                            // Add spacing between messages
-                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(8.dp))
+                                // Add spacing between messages
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
 
                         // Show loading indicator at the end if we're loading a new response
@@ -260,7 +277,7 @@ fun BakingScreen(
                         }
 
                         // Spacer at the bottom to ensure content is scrollable above the input field
-                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
@@ -272,8 +289,8 @@ fun BakingScreen(
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFF7A3C5A).copy(alpha = 0.9f),
-                                Color(0xFF7A3C5A).copy(alpha = 0.4f)
+                                Color(0xFF2A2829).copy(alpha = 0.8f),
+                                Color(0xFF2B292A).copy(alpha = 0.65f)
                             ),
                             startY = 0f,
                             endY = 500f
@@ -549,33 +566,58 @@ fun ChatBubble(
             .padding(vertical = 4.dp),
         contentAlignment = if (isUserMessage) Alignment.CenterEnd else Alignment.CenterStart
     ) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .background(
-                    color = if (isUserMessage)
-                        Color(0xFFFF1493).copy(alpha = 0.7f)
-                    else
-                        Color(0xFF7A3C5A).copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(
-                        topStart = if (isUserMessage) 16.dp else 4.dp,
-                        topEnd = if (isUserMessage) 4.dp else 16.dp,
-                        bottomStart = 16.dp,
-                        bottomEnd = 16.dp
+        if (isUserMessage) {
+            // User message - Right-aligned bubble with 75% max width and translucent gradient
+            Box(
+                modifier = Modifier
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFF2C282B),
+                        shape = RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 16.dp
+                        )
                     )
+                    .widthIn(max = (LocalConfiguration.current.screenWidthDp * 0.75).dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.1f),  // More opaque at top
+                                Color.White.copy(alpha = 0.08f)    // More transparent at bottom
+                            )
+                        ),
+                        shape = RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 16.dp
+                        )
+                    )
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text = message,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    lineHeight = 24.sp
                 )
-                .padding(12.dp)
-        ) {
+            }
+        } else {
+            // LLM message - Full width white text without bubble
             Text(
                 text = message,
                 color = Color.White,
                 fontSize = 16.sp,
-                lineHeight = 24.sp
+                lineHeight = 24.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
             )
         }
     }
 }
-
 @Preview(showSystemUi = true)
 @Composable
 fun BakingScreenPreview() {
