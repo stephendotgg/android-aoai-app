@@ -18,10 +18,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import gg.stephen.gptwrapper.MainViewModel
 import gg.stephen.gptwrapper.R
 
 @Composable
-fun ChatTopBar() {
+fun ChatTopBar(mainViewModel: MainViewModel) {
+    val selectedModel by mainViewModel.selectedModel.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+
+    val models = listOf(
+        "gpt-4" to "GPT-4",
+        "gpt-4o-mini" to "GPT-4o Mini",
+        "gpt-35-turbo" to "GPT-3.5 Turbo"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -39,7 +49,53 @@ fun ChatTopBar() {
         )
 
         // Model selector dropdown
-        ModelSelector()
+        Box(
+            modifier = Modifier
+                .height(36.dp)
+                .border(
+                    width = 1.dp,
+                    color = Color(0xFF2C282B),
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .background(
+                    color = Color(0xFF1FFE8),
+                    shape = RoundedCornerShape(6.dp)
+                )
+                .clickable { expanded = true }
+                .padding(15.dp, 0.dp)
+        ) {
+            Row(
+                modifier = Modifier.height(36.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = models.find { it.first == selectedModel }?.second ?: "GPT-4",
+                    color = Color(0xFFFFB1E3),
+                )
+                Image(
+                    painter = painterResource(R.drawable.chevron_down_solid),
+                    contentDescription = "Dropdown",
+                    modifier = Modifier.size(12.dp),
+                    colorFilter = ColorFilter.tint(Color(0xFFFFB1E3))
+                )
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                models.forEach { (id, displayName) ->
+                    DropdownMenuItem(
+                        text = { Text(text = displayName) },
+                        onClick = {
+                            mainViewModel.setSelectedModel(id)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
 
         // Avatar
         Image(
@@ -50,60 +106,5 @@ fun ChatTopBar() {
                 .clip(CircleShape)
                 .align(Alignment.CenterVertically)
         )
-    }
-}
-
-@Composable
-private fun ModelSelector() {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedOption by remember { mutableStateOf("Gemini 2.0 Flash") }
-    val options = listOf("Gemini 2.0 Flash", "GPT-4o", "Claude 3.7 Sonnet")
-
-    Box(
-        modifier = Modifier
-            .height(36.dp)
-            .border(
-                width = 1.dp,
-                color = Color(0xFF2C282B),
-                shape = RoundedCornerShape(6.dp)
-            )
-            .background(
-                color = Color(0xFF1FFE8),
-                shape = RoundedCornerShape(6.dp)
-            )
-            .clickable { expanded = true }
-            .padding(15.dp, 0.dp)
-    ) {
-        Row(
-            modifier = Modifier.height(36.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(
-                text = selectedOption,
-                color = Color(0xFFFFB1E3),
-            )
-            Image(
-                painter = painterResource(R.drawable.chevron_down_solid),
-                contentDescription = "Dropdown",
-                modifier = Modifier.size(12.dp),
-                colorFilter = ColorFilter.tint(Color(0xFFFFB1E3))
-            )
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(text = option) },
-                    onClick = {
-                        selectedOption = option
-                        expanded = false
-                    }
-                )
-            }
-        }
     }
 } 

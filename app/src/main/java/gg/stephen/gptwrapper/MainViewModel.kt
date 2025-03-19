@@ -24,12 +24,18 @@ class MainViewModel : ViewModel() {
     private val _conversationHistory: MutableStateFlow<List<ChatItem>> = MutableStateFlow(emptyList())
     val conversationHistory: StateFlow<List<ChatItem>> = _conversationHistory.asStateFlow()
 
+    private val _selectedModel: MutableStateFlow<String> = MutableStateFlow("gpt-4o-mini")
+    val selectedModel: StateFlow<String> = _selectedModel.asStateFlow()
+
     private val openAIClient = OpenAIClientBuilder()
         .endpoint(BuildConfig.AZURE_OPENAI_ENDPOINT)
         .credential(AzureKeyCredential(BuildConfig.AZURE_OPENAI_KEY))
         .buildClient()
 
-    private val deploymentId = BuildConfig.AZURE_OPENAI_DEPLOYMENT_ID
+    fun setSelectedModel(model: String) {
+        _selectedModel.value = model
+        _conversationHistory.value = emptyList()
+    }
 
     fun sendPrompt(prompt: String) {
         if (prompt.isBlank()) return
@@ -57,7 +63,7 @@ class MainViewModel : ViewModel() {
                     .setTemperature(0.7)
                     .setTopP(0.95)
 
-                val chatCompletions = openAIClient.getChatCompletions(deploymentId, options)
+                val chatCompletions = openAIClient.getChatCompletions(_selectedModel.value, options)
 
                 if (chatCompletions != null && !chatCompletions.getChoices().isEmpty()) {
                     val outputContent = chatCompletions.getChoices().get(0).getMessage().getContent()

@@ -15,9 +15,7 @@ import gg.stephen.gptwrapper.ui.chat.components.ChatContent
 import gg.stephen.gptwrapper.ui.chat.components.ChatTopBar
 
 @Composable
-fun ChatScreen(
-    mainViewModel: MainViewModel = viewModel()
-) {
+fun ChatScreen(mainViewModel: MainViewModel) {
     val conversationHistory by mainViewModel.conversationHistory.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -28,7 +26,7 @@ fun ChatScreen(
 
         // Main content
         Column(modifier = Modifier.fillMaxSize()) {
-            ChatTopBar()
+            ChatTopBar(mainViewModel)
             Box(modifier = Modifier.weight(1f)) {
                 ChatContent(mainViewModel)
             }
