@@ -54,7 +54,7 @@ class MainViewModel : ViewModel() {
                     when (chatItem.user) {
                         User.USER -> prompts.add(ChatRequestUserMessage(chatItem.message))
                         User.ASSISTANT -> prompts.add(ChatRequestAssistantMessage(chatItem.message))
-                        User.SYSTEM -> TODO()
+                        User.SYSTEM -> {}
                     }
                 }
 

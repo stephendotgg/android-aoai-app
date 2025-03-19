@@ -29,7 +29,6 @@ fun ChatBackgroundGradient() {
                 .fillMaxWidth()
                 .height(500.dp)
         ) {
-            val density = LocalDensity.current
             val boxSize = remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
             Box(

@@ -1,5 +1,7 @@
 package gg.stephen.gptwrapper.chat
 
 enum class User {
-    SYSTEM, USER, ASSISTANT
+    SYSTEM,
+    USER,
+    ASSISTANT
 }
