@@ -2,9 +2,7 @@ package gg.stephen.gptwrapper
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.azure.ai.openai.OpenAIClient
 import com.azure.ai.openai.OpenAIClientBuilder
-import com.azure.ai.openai.models.ChatCompletions
 import com.azure.ai.openai.models.ChatCompletionsOptions
 import com.azure.ai.openai.models.ChatRequestMessage
 import com.azure.ai.openai.models.ChatRequestUserMessage
@@ -19,9 +17,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.ArrayList
 
-class BakingViewModel : ViewModel() {
+class MainViewModel : ViewModel() {
     private val _uiState: MutableStateFlow<UiState> = MutableStateFlow(UiState.Initial)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+
+    private val _conversationHistory: MutableStateFlow<List<ChatItem>> = MutableStateFlow(emptyList())
+    val conversationHistory: StateFlow<List<ChatItem>> = _conversationHistory.asStateFlow()
 
     private val openAIClient = OpenAIClientBuilder()
         .endpoint(BuildConfig.AZURE_OPENAI_ENDPOINT)
@@ -29,12 +30,13 @@ class BakingViewModel : ViewModel() {
         .buildClient()
 
     private val deploymentId = BuildConfig.AZURE_OPENAI_DEPLOYMENT_ID
-    val conversationHistory = mutableListOf<ChatItem>()
 
     fun sendPrompt(prompt: String) {
         if (prompt.isBlank()) return
 
-        conversationHistory.add(ChatItem(User.USER, prompt))
+        val currentHistory = _conversationHistory.value.toMutableList()
+        currentHistory.add(ChatItem(User.USER, prompt))
+        _conversationHistory.value = currentHistory
         _uiState.value = UiState.Loading
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -42,7 +44,7 @@ class BakingViewModel : ViewModel() {
                 val prompts = ArrayList<ChatRequestMessage>()
 
                 // Convert conversation history to Azure OpenAI format
-                for (chatItem in conversationHistory) {
+                for (chatItem in currentHistory) {
                     when (chatItem.user) {
                         User.USER -> prompts.add(ChatRequestUserMessage(chatItem.message))
                         User.ASSISTANT -> prompts.add(ChatRequestAssistantMessage(chatItem.message))
@@ -60,7 +62,9 @@ class BakingViewModel : ViewModel() {
                 if (chatCompletions != null && !chatCompletions.getChoices().isEmpty()) {
                     val outputContent = chatCompletions.getChoices().get(0).getMessage().getContent()
                     if (outputContent != null) {
-                        conversationHistory.add(ChatItem(User.ASSISTANT, outputContent))
+                        val updatedHistory = currentHistory.toMutableList()
+                        updatedHistory.add(ChatItem(User.ASSISTANT, outputContent))
+                        _conversationHistory.value = updatedHistory
                         _uiState.value = UiState.Success(outputContent)
                     } else {
                         _uiState.value = UiState.Error("Empty response received")
@@ -75,7 +79,7 @@ class BakingViewModel : ViewModel() {
     }
 
     fun clearConversation() {
-        conversationHistory.clear()
+        _conversationHistory.value = emptyList()
         _uiState.value = UiState.Initial
     }
 }
